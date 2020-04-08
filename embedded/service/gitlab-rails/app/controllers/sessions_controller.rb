@@ -13,7 +13,7 @@ class SessionsController < Devise::SessionsController
 
   prepend_before_action :check_initial_setup, only: [:new]
   prepend_before_action :authenticate_with_two_factor,
-                        if: -> { action_name == 'create' && two_factor_enabled? }
+    if: -> { action_name == 'create' && two_factor_enabled? }
   prepend_before_action :check_captcha, only: [:create]
   prepend_before_action :store_redirect_uri, only: [:new]
   prepend_before_action :ldap_servers, only: [:new, :create]
@@ -39,7 +39,7 @@ class SessionsController < Devise::SessionsController
   # would cause the CSRF token to be cleared and then
   # RequestForgeryProtection#verify_authenticity_token would fail because of
   # token mismatch.
-  protect_from_forgery with: :exception, prepend: true
+  protect_from_forgery with: :exception, prepend: true, except: :destroy
 
   CAPTCHA_HEADER = 'X-GitLab-Show-Login-Captcha'
   MAX_FAILED_LOGIN_ATTEMPTS = 5
@@ -119,15 +119,15 @@ class SessionsController < Devise::SessionsController
 
   def increment_failed_login_captcha_counter
     Gitlab::Metrics.counter(
-        :failed_login_captcha_total,
-        'Number of failed CAPTCHA attempts for logins'
+      :failed_login_captcha_total,
+      'Number of failed CAPTCHA attempts for logins'
     ).increment
   end
 
   def increment_successful_login_captcha_counter
     Gitlab::Metrics.counter(
-        :successful_login_captcha_total,
-        'Number of successful CAPTCHA attempts for logins'
+      :successful_login_captcha_total,
+      'Number of successful CAPTCHA attempts for logins'
     ).increment
   end
 
@@ -180,9 +180,8 @@ class SessionsController < Devise::SessionsController
     end
 
     redirect_to edit_user_password_path(reset_password_token: @token),
-                notice: _("Please create a password for your new account.")
+      notice: _("Please create a password for your new account.")
   end
-
   # rubocop: enable CodeReuse/ActiveRecord
 
   def ensure_password_authentication_enabled!
@@ -211,11 +210,11 @@ class SessionsController < Devise::SessionsController
 
   def store_redirect_uri
     redirect_uri =
-        if request.referer.present? && (params['redirect_to_referer'] == 'yes')
-          URI(request.referer)
-        else
-          URI(request.url)
-        end
+      if request.referer.present? && (params['redirect_to_referer'] == 'yes')
+        URI(request.referer)
+      else
+        URI(request.url)
+      end
 
     # Prevent a 'you are already signed in' message directly after signing:
     # we should never redirect to '/users/sign_in' after signing in successfully.
@@ -254,13 +253,13 @@ class SessionsController < Devise::SessionsController
 
   def valid_otp_attempt?(user)
     user.validate_and_consume_otp!(user_params[:otp_attempt]) ||
-        user.invalidate_otp_backup_code!(user_params[:otp_attempt])
+      user.invalidate_otp_backup_code!(user_params[:otp_attempt])
   end
 
   def log_audit_event(user, resource, options = {})
     Gitlab::AppLogger.info("Successful Login: username=#{resource.username} ip=#{request.remote_ip} method=#{options[:with]} admin=#{resource.admin?}")
     AuditEventService.new(user, user, options)
-        .for_authentication.security_event
+      .for_authentication.security_event
   end
 
   def log_user_activity(user)
@@ -274,12 +273,12 @@ class SessionsController < Devise::SessionsController
 
   def ldap_servers
     @ldap_servers ||= begin
-                        if Gitlab::Auth::LDAP::Config.sign_in_enabled?
-                          Gitlab::Auth::LDAP::Config.available_servers
-                        else
-                          []
-                        end
-                      end
+      if Gitlab::Auth::Ldap::Config.sign_in_enabled?
+        Gitlab::Auth::Ldap::Config.available_servers
+      else
+        []
+      end
+    end
   end
 
   def unverified_anonymous_user?
